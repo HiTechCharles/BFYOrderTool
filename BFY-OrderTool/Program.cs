@@ -61,7 +61,9 @@ namespace BFY_OrderTool
             string ShopListPath = @Environment.GetEnvironmentVariable("onedriveconsumer") + "\\documents\\brew for you\\shoplist\\Shopping List.txt";
             string ShopContents = File.ReadAllText(ShopListPath);  //contents of file
             File.AppendAllText(ListPath, ShopContents);  //add lines from shoplist file to end of report
-            Console.WriteLine("Your order selections are all set.  viewing the report text file");
+            Console.WriteLine("\n\nYour order selections are all set.  viewing the");
+            Console.WriteLine("order text file.  Press a key to continue...");
+            Console.ReadKey();  //read a key for pause before viewing text file 
             System.Diagnostics.Process.Start(ListPath);  //open report text file for viewing 
         }
 
