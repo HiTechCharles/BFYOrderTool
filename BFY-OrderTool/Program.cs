@@ -1,8 +1,7 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.IO;
-
+using System.Linq;
+using System.Windows.Forms;
 
 namespace BFY_OrderTool
 {
@@ -27,15 +26,26 @@ namespace BFY_OrderTool
         public static string ListPath = @CatPath + "NextOrder.txt";
         #endregion
 
+        [STAThread]
         static void Main(string[] args)  //entrypoint of program
         {
+            // Get all command-line arguments
+            string[] cmdArgs = Environment.GetCommandLineArgs();
+
+            // Check if the parameter '-p' exists
+            if (Array.Exists(cmdArgs, arg => arg == "-p"))
+            {
+                CatPath = Environment.CurrentDirectory + "\\NextOrder\\";
+                ListPath = @CatPath + "NextOrder.txt";
+    }
 
             Console.Title = "BFY Order Creation tool";  // console title
             Console.ForegroundColor = ConsoleColor.White;  //text color for console
-            Console.WriteLine("This is the Brew for You Order creation Tool!  This program");
-            Console.WriteLine("will help you create your weekly sandwich order.  All you need");
-            Console.WriteLine("to do is select how many of each item you need.");
-            Console.WriteLine("\nBe sure to complete your shopping list first.");
+            Console.WriteLine("This is the Brew for You Order creation Tool!  This");
+            Console.WriteLine("program will help you create your weekly sandwich");
+            Console.WriteLine("order.  All you need to do is select how many of");
+            Console.WriteLine("each item you need. Be sure to complete your");
+            Console.WriteLine("shopping list first.");
 
             if ( File.Exists(ListPath) == true )  //if report file exists, 
                 {
@@ -57,14 +67,18 @@ namespace BFY_OrderTool
                 GetValues();  //see how many of each item is desired
             }
             
-            //shopping list file from another of my apps.  it is added to the end of the report file
+            //add shopping list file from another of my apps.  it is added to the end of the report file
             string ShopListPath = @Environment.GetEnvironmentVariable("onedriveconsumer") + "\\documents\\brew for you\\shoplist\\Shopping List.txt";
             string ShopContents = File.ReadAllText(ShopListPath);  //contents of file
             File.AppendAllText(ListPath, ShopContents);  //add lines from shoplist file to end of report
             Console.WriteLine("\n\nYour order selections are all set.  viewing the");
-            Console.WriteLine("order text file.  Press a key to continue...");
+            Console.WriteLine("order text file.  The contents of this file is");
+            Console.WriteLine("stored in the clipboard.  Press a key to continue.");
+            
             Console.ReadKey();  //read a key for pause before viewing text file 
-            System.Diagnostics.Process.Start(ListPath);  //open report text file for viewing 
+            ShopContents = File.ReadAllText(ListPath);
+            Clipboard.SetText(ShopContents); //add file contents to clipboard
+             System.Diagnostics.Process.Start(ListPath);  //open report text file for viewing 
         }
 
         static DateTime GetClosestMonday(DateTime date)  //get the next date of closest monday 
@@ -120,6 +134,11 @@ namespace BFY_OrderTool
                     }
                     #endregion 
                 } while (Double.TryParse(input, out QtySelected[I]) == false);
+
+                if (QtySelected[I] < 0 || QtySelected[I] > 9 )
+                {
+                    I--;
+                }
             }
 
             SaveToFile();  //save all selections to disk
@@ -127,6 +146,13 @@ namespace BFY_OrderTool
 
         static void SaveToFile () //save current selections to report
         {
+            double TotalQTY = QtySelected.Sum();  //add all values in qtyselected array
+
+            if ( TotalQTY == 0 )  //if total of all values = 0
+            {
+                return;  //don't print items for this category, none selected
+            }
+            
             StreamWriter bn = File.AppendText(ListPath);  //append to report file in progress
             bn.WriteLine("\n" + CategoryName + ":");  //write category name 
             for (int I = 0; I < NumItems; I++)  //for each item 
